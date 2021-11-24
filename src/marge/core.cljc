@@ -7,17 +7,17 @@
   You can also view [blog posts] (http://markw.xyz/tags/marge/) about marge
   "
   {:author "Mark Woodhall"}
-  #?@(:cljs 
-       [(:require-macros [hiccups.core :as hiccups :refer [html]])
-        (:require 
-          [clojure.string :as s]
-          [marge.util :refer [balance-at balance-when longest]]
-          [hiccups.runtime :as hiccupsrt])]
-       :clj
-       [(:require 
-           [clojure.string  :as s]
-           [marge.util :refer [balance-at balance-when longest]]
-           [hiccup.core :refer [html]])]))
+  #?@(:cljs
+      [(:require-macros [hiccups.core :as hiccups :refer [html]])
+       (:require
+        [clojure.string :as s]
+        [marge.util :refer [balance-at balance-when longest]]
+        [hiccups.runtime :as hiccupsrt])]
+      :clj
+      [(:require
+        [clojure.string  :as s]
+        [marge.util :refer [balance-at balance-when longest]]
+        [hiccup.core :refer [html]])]))
 
 (declare pair->markdown list- ordered-list unordered-list)
 
@@ -90,10 +90,10 @@
   ([col]
    (ordered-list col 0))
   ([col depth]
-   (let [position (atom 1)
-         render-fn #(str %1 @position ". " (list-entry %2) linebreak)
+   (let [position    (atom 1)
+         render-fn   #(str %1 @position ". " (list-entry %2) linebreak)
          position-fn #(do (swap! position inc) %)
-         list-fn (partial list- depth (comp position-fn render-fn))]
+         list-fn     (partial list- depth (comp position-fn render-fn))]
      (->> col
           (map list-fn)
           s/join))))
@@ -104,7 +104,7 @@
   ([col depth]
    (->> col
         (map
-          (partial list- depth #(str %1 "+ " (list-entry %2) linebreak)))
+         (partial list- depth #(str %1 "+ " (list-entry %2) linebreak)))
         s/join)))
 
 (defn- link
@@ -128,7 +128,7 @@
     (code-block value)
     (let [values (first value)
           syntax (name (first values))
-          code (second values)]
+          code   (second values)]
       (code-block syntax code))))
 
 (defn- pad
@@ -163,15 +163,15 @@
 
 (defn- column
   [[column cells]]
-  (let [parsed-cells (parse-cells cells)
-        col-length (count column)
+  (let [parsed-cells    (parse-cells cells)
+        col-length      (count column)
         max-data-length (longest parsed-cells)
-        max-length (max col-length max-data-length)
-        divider (s/join (repeat max-length divider))
-        padding (s/join (repeat max-length whitespace))]
-    {:header (col padding column)
+        max-length      (max col-length max-data-length)
+        divider         (s/join (repeat max-length divider))
+        padding         (s/join (repeat max-length whitespace))]
+    {:header  (col padding column)
      :divider (col padding divider)
-     :cells (map (partial col padding) parsed-cells)}))
+     :cells   (map (partial col padding) parsed-cells)}))
 
 (defn- row
   [cells]
@@ -182,10 +182,10 @@
 (defn- table
   [value]
   (let [cols-and-rows (partition 2 value)
-        columns (map column cols-and-rows)
-        cells (apply interleave (map :cells columns))
-        cells-by-row (partition (count columns) cells)
-        rows (flatten (map row cells-by-row))]
+        columns       (map column cols-and-rows)
+        cells         (apply interleave (map :cells columns))
+        cells-by-row  (partition (count columns) cells)
+        rows          (flatten (map row cells-by-row))]
     (str
      (row (map :header columns))
      (row (map :divider columns))
@@ -194,29 +194,29 @@
 (defn- pair->markdown
   [[node value]]
   (case node
-    :br (if (= value :br) (str linebreak linebreak) linebreak)
-    :hr (if (= value :hr) (str rule linebreak rule) rule)
-    :p  (paragraph value)
-    :h1 (header 1 value)
-    :h2 (header 2 value)
-    :h3 (header 3 value)
-    :h4 (header 4 value)
-    :h5 (header 5 value)
-    :h6 (header 6 value)
-    :blockquote (blockquote value)
+    :br            (if (= value :br) (str linebreak linebreak) linebreak)
+    :hr            (if (= value :hr) (str rule linebreak rule) rule)
+    :p             (paragraph value)
+    :h1            (header 1 value)
+    :h2            (header 2 value)
+    :h3            (header 3 value)
+    :h4            (header 4 value)
+    :h5            (header 5 value)
+    :h6            (header 6 value)
+    :blockquote    (blockquote value)
     :strikethrough (strikethrough value)
-    :i (emphasis value)
-    :normal value
-    :em (emphasis value)
-    :strong (strong value)
-    :b (strong value)
-    :ol (ordered-list value)
-    :ul (unordered-list value)
-    :link (link value)
-    :anchor (anchor value)
-    :code (code value)
-    :table (table value)
-    :html (html value)))
+    :i             (emphasis value)
+    :normal        value
+    :em            (emphasis value)
+    :strong        (strong value)
+    :b             (strong value)
+    :ol            (ordered-list value)
+    :ul            (unordered-list value)
+    :link          (link value)
+    :anchor        (anchor value)
+    :code          (code value)
+    :table         (table value)
+    :html          (html value)))
 
 (defn- prepare-col
   "Prepares a col representing markdown structure by first balancing it
@@ -233,14 +233,14 @@
   [col]
   (->> col
        prepare-col
-       (map (fn [pair] 
+       (map (fn [pair]
               (if (and (sequential? (last pair))
                        (keyword? (first (last pair)))
                        (not= (first pair) :html))
-                (pair->markdown 
-                  [(first pair) 
-                   (case (first pair)
-                     (:ul :ol) (map markdown (prepare-col (last pair)))
-                     (markdown (last pair)))])
+                (pair->markdown
+                 [(first pair)
+                  (case (first pair)
+                    (:ul :ol) (map markdown (prepare-col (last pair)))
+                    (markdown (last pair)))])
                 (pair->markdown pair))))
        s/join))
