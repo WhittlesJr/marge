@@ -21,12 +21,7 @@
 
 (declare pair->markdown list- ordered-list unordered-list)
 
-(defonce ^:private linebreak "\n")
-(defonce ^:private column-end " |")
-(defonce ^:private divider "-")
-(defonce ^:private whitespace " ")
-(defonce ^:private rule (str divider divider divider))
-(defonce ^:private column-start " | ") ;; We trim the leading space when rendering a row
+(defmulti encode (fn [format node _value] [format node]))
 
 (def ^:private ol-re #"^(\d+)\. ")
 
@@ -41,30 +36,18 @@
                  (str (second m) "\\. ")))
     s))
 
-(defn- paragraph
-  [value]
+(defn paragraph
+  [{:keys [linebreak]} value]
   (str (escape-ol value) linebreak))
 
-(defn- header
-  [depth value]
-  (let [hashes (s/join (repeat depth "#"))]
-    (str hashes whitespace value linebreak)))
+(defn header
+  [{:keys [depth-marker whitespace linebreak]} value depth]
+  (let [markers (s/join (repeat depth depth-marker))]
+    (str markers whitespace value linebreak)))
 
-(defn- blockquote
-  [value]
-  (str "> " value))
-
-(defn- strikethrough
-  [value]
-  (str "~~" value "~~"))
-
-(defn- strong
-  [value]
-  (str "**" value "**"))
-
-(defn- emphasis
-  [value]
-  (str "*" value "*"))
+(defn delimited
+  [delimiter value]
+  (str delimiter value delimiter))
 
 (defn- list-
   [depth list-fn v]
@@ -191,25 +174,22 @@
      (row (map :divider columns))
      (s/join rows))))
 
+(defn br [value linebreak]
+  (if (= value :br) (str linebreak linebreak) linebreak))
+
+(defn hr [value rule linebreak]
+  (if (= value :hr) (str rule linebreak rule) rule))
+
+(def aliases
+  {:i        :italic
+   :em       :italic
+   :emphasis :italic
+   :strong   :bold
+   :b        :bold})
+
 (defn- pair->markdown
   [[node value]]
   (case node
-    :br            (if (= value :br) (str linebreak linebreak) linebreak)
-    :hr            (if (= value :hr) (str rule linebreak rule) rule)
-    :p             (paragraph value)
-    :h1            (header 1 value)
-    :h2            (header 2 value)
-    :h3            (header 3 value)
-    :h4            (header 4 value)
-    :h5            (header 5 value)
-    :h6            (header 6 value)
-    :blockquote    (blockquote value)
-    :strikethrough (strikethrough value)
-    :i             (emphasis value)
-    :normal        value
-    :em            (emphasis value)
-    :strong        (strong value)
-    :b             (strong value)
     :ol            (ordered-list value)
     :ul            (unordered-list value)
     :link          (link value)
